@@ -39,7 +39,6 @@ public class CacheAttribute : Attribute, IAsyncActionFilter
         }
         var excutedContext = await next();
 
-        var zzztt = excutedContext.Result is OkObjectResult objectResult1;
         if (excutedContext.Result is OkObjectResult objectResult){
             await cacheService.SetCacheResponseAsync(cacheKey, objectResult.Value, TimeSpan. FromSeconds(_timeToLiveSeconds));
         }

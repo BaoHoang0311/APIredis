@@ -1,4 +1,5 @@
 using API.Attributes;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -7,6 +8,7 @@ namespace API.Controllers
     [Route("api/[controller]")]
     public class WeatherForecastController : ControllerBase
     {
+        private readonly IResponseCacheService _responseCacheService;
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -14,9 +16,10 @@ namespace API.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IResponseCacheService responseCacheService)
         {
             _logger = logger;
+            _responseCacheService = responseCacheService;
         }
 
         // [HttpGet]
@@ -31,7 +34,7 @@ namespace API.Controllers
         //     })
         //     .ToArray();
         // }
-        [HttpGet]
+        [HttpGet("getall")]
         [Cache(100)]
         public async Task<IActionResult> Get()
         {
@@ -44,6 +47,12 @@ namespace API.Controllers
             .ToArray();
 
             return Ok(zz);
+        }
+        [HttpGet("Create")]
+        public async Task<IActionResult> Create()
+        {
+            await _responseCacheService.RemoveCacheResponseAsync("api/weatherforecast/getall");
+            return Ok();            
         }
     }
 }

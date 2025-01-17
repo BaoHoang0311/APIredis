@@ -19,9 +19,34 @@ public class ResponseCacheService : IResponseCacheService
     public async Task<string> GetCacheResponseAsync(string cacheKey)
     {
         var cacheResponse = await _distributedCache.GetStringAsync(cacheKey);
-        return string.IsNullOrEmpty(cacheResponse) ?  null : cacheResponse;
+        return string.IsNullOrEmpty(cacheResponse) ? null : cacheResponse;
     }
 
+    public async Task RemoveCacheResponseAsync(string partern)
+    {
+        if (string.IsNullOrWhiteSpace(partern))
+            throw new ArgumentException("Value cannot be null or whitespace");
+
+        await foreach (var key in GetkeyAsync(partern+"*"))
+        {
+            await _distributedCache.RemoveAsync(key);
+        }
+    }
+    private async IAsyncEnumerable<string> GetkeyAsync(string pattern)
+    {
+        {
+            if (string.IsNullOrWhiteSpace(pattern))
+                throw new ArgumentException("Value cannot be null or whitespace");
+            foreach (var endPoint in _connectionMultiplexer.GetEndPoints())
+            {
+                var servers = _connectionMultiplexer.GetServer(endPoint);
+                foreach (var key in servers.Keys(pattern:pattern))
+                {
+                    yield return key.ToString();
+                }
+            }
+        }
+    }
     public async Task SetCacheResponseAsync(string cacheKey, object response, TimeSpan timeOut)
     {
         if (response == null) return;
